@@ -5,6 +5,7 @@
  */
 package vista;
 
+
 import static java.applet.Applet.newAudioClip;
 import java.applet.AudioClip;
 import modelo.Hilo;
@@ -16,25 +17,44 @@ import modelo.Hilo;
 public class FRM_VentanaJuego extends javax.swing.JFrame {
 
     Hilo hilo;
-    public String estado="";
-    String verificarPaso="";
-     String verificarArriba="";
-   
-    int aleatorioX= 0;
-    int aleatorioY=0;
+    public String estado="", estadoJuego="";
+     String colision="", colisionY="", colisionX="";
+
+    int aleatorioX= 0,aleatorioY=0, puntos=0;
     
     int vidaActual=0;
     int restaVida=0;
     
+    FRM_VentanaGameOver fRM_VentanaGameOver= new FRM_VentanaGameOver();
+    public FRM_IngresarPuntaje fRM_IngresarPuntaje = new FRM_IngresarPuntaje();
+    
+    
+    AudioClip sonido=newAudioClip(getClass().getResource("/audios/rio.wav"));
     public FRM_VentanaJuego() {
         initComponents();
-        hilo = new Hilo(this);
-        hilo.start();
-        this.vida.setValue(100);
+//        hilo = new Hilo(this);
+//        //hilo.start();
+//        this.vida.setValue(100);
+//        sonido.loop();
+//        labelVida.setText("100%");
+        setLocationRelativeTo(null);
         
-       labelVida.setText("100%");
     }
     
+    public void iniciarJuego()
+    {
+       hilo = new Hilo(this);
+        hilo.start();
+         this.vida.setValue(100);
+        sonido.loop();
+        labelVida.setText("100%");
+        estadoJuego="Play";
+    }
+    public void pararJuego()
+    {
+        hilo.stop();
+        estadoJuego="Stop";
+    }
     
     public void moverFondo()
     {
@@ -52,9 +72,9 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
     
     public void moverArriba(int intensidad)
     {
-       
         personaje.setLocation(personaje.getX(), personaje.getY()-5-intensidad);
-        
+        aleatorioY=(int) (Math.random()*(365-200))+200;
+        aleatorioX= (int) (Math.random()*(600-350))+350;
     }
     public void moverAbajo(int intensidad)
     {
@@ -95,68 +115,72 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
         
         if(obstaculo1.getX()<personaje.getX()-80)
         {
-            contador+=-5;
+            contador+=-2;
 //            System.out.println("Personaje "+personaje.getX());
             System.out.println("pasó "+contador );
             
             obstaculo1.setLocation(aleatorioX, aleatorioY);
 //            System.out.println("Y "+ obstaculo1.getY() +" X " +obstaculo1.getX() );
-            if(contador == -20)
+            if(contador == -70)
                 contador=0;
         }
             
     }
-   
-    public void verificarPaso()
-    {
-         if(obstaculo1.getX()-20<personaje.getX())
-        {
-            verificarPaso="paso";
-                System.out.println("pasó de verificar" );
-        }
-         else
-         {
-             System.out.println("colision en X");
-             verificarPaso="no paso";
-         }
-    }
-    
-    public void pasoArriba()
-    {
-        if(personaje.getY()+50<obstaculo1.getY() &&  personaje.getX()>=obstaculo1.getX()-100)
-        {
-            verificarArriba="paso";
-            System.out.println("paso arriba");
                 
-        }
-        else
-        {
-             verificarArriba="no paso";
-           
-        }
-    }
-    
-    String colision="";
-    int i = 0;
-    public void colision()
+
+    public void colisionX()
     {
-        
-        if(personaje.getX()>=obstaculo1.getX()-100 && personaje.getY()<=obstaculo1.getY())
+                //choque con X
+        if(personaje.getX()+100 >= obstaculo1.getX()-40)
         {
-            if(verificarPaso.equals("paso")||verificarArriba.equals("paso"))
+            if(obstaculo1.getX()<personaje.getX())
             {
-                colision="no colision";
-                System.out.println("no colision?"); 
+                System.out.println("no choque");
+                colisionX="No colision";
             }
             else
             {
-                colision="colision";
-                i++;
-                restaVida+=5;
-                System.out.println("colision ");
+                System.out.println("choque en X");
+                colisionX="Colision";
             }
-                       
         }
+        else
+        colisionX="No colision";
+    }
+    public void colisionY()
+    {
+        if(personaje.getY()<=obstaculo1.getY()+40) 
+        {
+            if(personaje.getY()+86<=obstaculo1.getY())
+            {
+                System.out.println("no choque");
+                colisionY="No colision";
+            }
+            else
+            {
+                System.out.println("choque Y");
+                colisionY="Colision";
+            }
+        }
+        else
+            colisionY="No colision";
+    }
+    
+    
+    int i = 0;
+    public void colision()
+    {
+        if(colisionX.equalsIgnoreCase("Colision")&&colisionY.equalsIgnoreCase("Colision"))
+        {
+            colision="Colision";
+            restaVida+=5;
+        }
+        else
+        {
+            puntos+=1;
+            labelPuntos.setText(""+puntos);
+        }
+        
           
     }
     
@@ -164,13 +188,26 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
     public void reducirVida()
    {
         
-       if(colision.equals("colision"))
+       if(colision.equals("Colision"))
        {
            vida.setValue(100-restaVida);
            
            labelVida.setText(100-restaVida+"%");
            
            System.out.println("vida restante "+restaVida);
+           
+           if(vida.getValue()<=0)
+           {
+               if(puntos>=350)
+                {
+                   fRM_IngresarPuntaje.setVisible(true);
+                   fRM_IngresarPuntaje.setPuntaje(puntos);
+                }
+               
+               fRM_VentanaGameOver.setVisible(true);
+               this.dispose();
+               hilo.stop();
+           }
        }
    }
     
@@ -180,12 +217,20 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
 
         personaje = new javax.swing.JLabel();
         obstaculo1 = new javax.swing.JLabel();
+        labelPuntos = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
         labelVida = new javax.swing.JLabel();
         vida = new javax.swing.JProgressBar();
         fondo = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Juego");
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setPreferredSize(new java.awt.Dimension(400, 500));
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentHidden(java.awt.event.ComponentEvent evt) {
+                formComponentHidden(evt);
+            }
+        });
         addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 formKeyPressed(evt);
@@ -201,9 +246,22 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
         getContentPane().add(obstaculo1);
         obstaculo1.setBounds(560, 230, 70, 60);
 
+        labelPuntos.setFont(new java.awt.Font("Virtual DJ", 0, 18)); // NOI18N
+        labelPuntos.setText("0");
+        getContentPane().add(labelPuntos);
+        labelPuntos.setBounds(280, 40, 70, 30);
+
+        jLabel1.setFont(new java.awt.Font("Virtual DJ", 0, 14)); // NOI18N
+        jLabel1.setText("Puntos:");
+        getContentPane().add(jLabel1);
+        jLabel1.setBounds(190, 40, 90, 30);
+
         labelVida.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         getContentPane().add(labelVida);
         labelVida.setBounds(190, 20, 160, 20);
+
+        vida.setBorderPainted(false);
+        vida.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         getContentPane().add(vida);
         vida.setBounds(190, 20, 160, 20);
 
@@ -229,41 +287,17 @@ public class FRM_VentanaJuego extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_formKeyPressed
 
-    
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FRM_VentanaJuego.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FRM_VentanaJuego.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FRM_VentanaJuego.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FRM_VentanaJuego.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+    private void formComponentHidden(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentHidden
+        // TODO add your handling code here:
+       pararJuego();
+        
+    }//GEN-LAST:event_formComponentHidden
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FRM_VentanaJuego().setVisible(true);
-            }
-        });
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel fondo;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel labelPuntos;
     private javax.swing.JLabel labelVida;
     private javax.swing.JLabel obstaculo1;
     private javax.swing.JLabel personaje;
