@@ -28,13 +28,12 @@ public class FRM_Puntajes extends javax.swing.JFrame {
     
     public void mostrarPuntajes(ArrayList<Puntaje> lista)
     {
-        
-        ArrayList<Puntaje> listaX = lista;
+
         texto="";
-        for (int i = 0; i < listaX.size(); i++) {
+        for (int i = 0; i < lista.size(); i++) {
             
             
-            texto+=listaX.get(i).getIdentificacion()+": "+listaX.get(i).getPuntaje()+"\n";
+            texto+=lista.get(i).getIdentificacion()+": "+lista.get(i).getPuntaje()+"\n";
             
         }
        jTextArea1.setText(texto);
